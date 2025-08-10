@@ -6,8 +6,8 @@ struct RemaindersSettings: View {
     /// Сервис управления Tabbar
     @EnvironmentObject private var tabbarService: TabbarService
     
-    /// Состояние уведомлений (сохраняется в UserDefaults)
-    @State private var isNotificationsEnabled: Bool = UserDefaults.standard.bool(forKey: "notifications_enabled")
+    /// Сервис управления разрешениями на уведомления
+    @StateObject private var notificationService = NotificationPermissionService()
     
     /// Выбранный интервал (сохраняется в UserDefaults)
     @State private var selectedInterval: String = UserDefaults.standard.string(forKey: "selected_interval") ?? "EVERY 3 HOURS"
@@ -45,19 +45,23 @@ struct RemaindersSettings: View {
                         .foregroundStyle(.white)
                         .font(.customFont(font: .bold, size: 24))
                     Spacer()
-                    Image(isNotificationsEnabled ? .toggleOn : .toggleOff)
+                    Image(notificationService.isNotificationsEnabled ? .toggleOn : .toggleOff)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 80, height: 80, alignment: .center)
                         .onTapGesture {
-                            toggleNotifications()
+                            Task {
+                                await notificationService.toggleNotifications()
+                            }
                         }
                 }
                 .padding(.horizontal)
                 .background(RoundedRectangle(cornerRadius: 20).fill(.customDarkGray))
                 .padding(.bottom, 20)
                 .onTapGesture {
-                    toggleNotifications()
+                    Task {
+                        await notificationService.toggleNotifications()
+                    }
                 }
                 
                 
@@ -87,11 +91,11 @@ struct RemaindersSettings: View {
                                         .stroke(selectedInterval == interval ? Color.white : Color.clear, lineWidth: 1)
                                 )
                                 .onTapGesture {
-                                    if isNotificationsEnabled {
+                                    if notificationService.isNotificationsEnabled {
                                         selectInterval(interval)
                                     }
                                 }
-                                .opacity(isNotificationsEnabled ? 1.0 : 0.5)
+                                .opacity(notificationService.isNotificationsEnabled ? 1.0 : 0.5)
                         }
                     }
                     .foregroundStyle(.white)
@@ -113,11 +117,11 @@ struct RemaindersSettings: View {
                                         .stroke(selectedInterval == interval ? Color.white : Color.clear, lineWidth: 1)
                                 )
                                 .onTapGesture {
-                                    if isNotificationsEnabled {
+                                    if notificationService.isNotificationsEnabled {
                                         selectInterval(interval)
                                     }
                                 }
-                                .opacity(isNotificationsEnabled ? 1.0 : 0.5)
+                                .opacity(notificationService.isNotificationsEnabled ? 1.0 : 0.5)
                         }
                     }
                     .foregroundStyle(.white)
@@ -141,11 +145,11 @@ struct RemaindersSettings: View {
                                         .stroke(selectedInterval == interval ? Color.white : Color.clear, lineWidth: 1)
                                 )
                                 .onTapGesture {
-                                    if isNotificationsEnabled {
+                                    if notificationService.isNotificationsEnabled {
                                         selectInterval(interval)
                                     }
                                 }
-                                .opacity(isNotificationsEnabled ? 1.0 : 0.5)
+                                .opacity(notificationService.isNotificationsEnabled ? 1.0 : 0.5)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -174,11 +178,11 @@ struct RemaindersSettings: View {
                                         .stroke(selectedTime == time ? Color.white : Color.clear, lineWidth: 1)
                                 )
                                 .onTapGesture {
-                                    if isNotificationsEnabled {
+                                    if notificationService.isNotificationsEnabled {
                                         selectTime(time)
                                     }
                                 }
-                                .opacity(isNotificationsEnabled ? 1.0 : 0.5)
+                                .opacity(notificationService.isNotificationsEnabled ? 1.0 : 0.5)
                         }
                     }
                     .foregroundStyle(.white)
@@ -209,11 +213,11 @@ struct RemaindersSettings: View {
                                         .stroke(selectedDays.contains(day) ? Color.white : Color.clear, lineWidth: 1)
                                 )
                                 .onTapGesture {
-                                    if isNotificationsEnabled {
+                                    if notificationService.isNotificationsEnabled {
                                         toggleDay(day)
                                     }
                                 }
-                                .opacity(isNotificationsEnabled ? 1.0 : 0.5)
+                                .opacity(notificationService.isNotificationsEnabled ? 1.0 : 0.5)
                         }
                     }
                     .foregroundStyle(.white)
@@ -235,11 +239,11 @@ struct RemaindersSettings: View {
                                         .stroke(selectedDays.contains(day) ? Color.white : Color.clear, lineWidth: 1)
                                 )
                                 .onTapGesture {
-                                    if isNotificationsEnabled {
+                                    if notificationService.isNotificationsEnabled {
                                         toggleDay(day)
                                     }
                                 }
-                                .opacity(isNotificationsEnabled ? 1.0 : 0.5)
+                                .opacity(notificationService.isNotificationsEnabled ? 1.0 : 0.5)
                         }
                     }
                     .foregroundStyle(.white)
@@ -248,7 +252,7 @@ struct RemaindersSettings: View {
                     .padding(.bottom, 0)
                     
                 }
-                .padding(.bottom, AppConfig.isIPhoneSE3rdGeneration ? 220 : 160)
+                .padding(.bottom, AppConfig.isIPhoneSE3rdGeneration ? 120 : 60)
                 
                 
                 
@@ -273,34 +277,20 @@ struct RemaindersSettings: View {
                     .onTapGesture {
                         // Возвращаемся на экран детального представления
                         appRouter.careRoute.removeLast()
+                        tabbarService.isTabbarVisible = true
                     }
+            }
+        }
+        .onAppear {
+            tabbarService.isTabbarVisible = false
+            // Проверяем текущий статус разрешений при появлении экрана
+            Task {
+                await notificationService.checkCurrentStatus()
             }
         }
     }
     
     // MARK: - Private Methods
-    
-    /// Переключение состояния уведомлений
-    private func toggleNotifications() {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            isNotificationsEnabled.toggle()
-            UserDefaults.standard.set(isNotificationsEnabled, forKey: "notifications_enabled")
-            
-            // Если уведомления выключены, сбрасываем все выбранные элементы
-            if !isNotificationsEnabled {
-                resetAllSelections()
-            }
-            
-            // Здесь можно добавить логику для включения/выключения уведомлений
-            if isNotificationsEnabled {
-                print("Уведомления включены")
-                // Логика для включения уведомлений
-            } else {
-                print("Уведомления выключены")
-                // Логика для выключения уведомлений
-            }
-        }
-    }
     
     /// Сброс всех выбранных элементов
     private func resetAllSelections() {

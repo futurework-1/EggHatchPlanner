@@ -15,6 +15,8 @@ struct AddIncubationView: View {
     @State private var selectedSpecies: BirdSpecies = .chicken
     /// Выбранная дата
     @State private var selectedDate: Date = Date()
+    /// Показывать ли DatePicker
+    @State private var isDatePickerPresented: Bool = false
     /// Количество яиц
     @State private var numberOfEggs: Int = 0
     /// Выбранные напоминания
@@ -33,8 +35,24 @@ struct AddIncubationView: View {
                     SelectSpeciesView(selectedSpecies: $selectedSpecies)
                         .padding(.vertical, 20)
                     
-                    /// Компонент отображения даты
-                    DateView(selectedDate: $selectedDate)
+                    /// Компонент выбора даты
+                    Button(action: {
+                        isDatePickerPresented = true
+                    }) {
+                        HStack {
+                            Text("📅  \(selectedDate.formattedDate)")
+                                .font(.customFont(font: .bold, size: 20))
+                                .foregroundColor(.white)
+                                .textCase(.uppercase)
+                            Spacer()
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 17)
+                                .fill(.customDarkGray)
+                        )
+                    }
+                    .buttonStyle(.plain)
                     
                     /// Компонент ввода количества яиц с передачей состояния фокуса
                     NumberOfEggsView(
@@ -100,6 +118,26 @@ struct AddIncubationView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
+        .sheet(isPresented: $isDatePickerPresented) {
+            VStack(spacing: 0) {
+                DatePicker(
+                    "",
+                    selection: $selectedDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(WheelDatePickerStyle())
+                .labelsHidden()
+                
+                Button("Done") {
+                    isDatePickerPresented = false
+                }
+                .font(.customFont(font: .bold, size: 16))
+                .foregroundColor(.white)
+                .padding()
+            }
+            .presentationDetents([.height(300)])
+            .presentationDragIndicator(.visible)
+        }
         .toolbar {
             /// Заголовок экрана в центре
             ToolbarItem(placement: .principal) {

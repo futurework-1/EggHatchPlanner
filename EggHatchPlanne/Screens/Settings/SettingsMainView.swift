@@ -51,8 +51,8 @@ struct SettingsMainView: View {
     /// Сервис управления Tabbar
     @EnvironmentObject private var tabbarService: TabbarService
     
-    /// Состояние уведомлений (сохраняется в UserDefaults)
-    @State private var isNotificationsEnabled: Bool = UserDefaults.standard.bool(forKey: "notifications_enabled")
+    /// Сервис управления разрешениями на уведомления
+    @StateObject private var notificationService = NotificationPermissionService()
     
     /// Переменные для WebView
     @State private var showWebView = false
@@ -80,19 +80,23 @@ struct SettingsMainView: View {
                             .foregroundStyle(.white)
                             .font(.customFont(font: .bold, size: 24))
                         Spacer()
-                        Image(isNotificationsEnabled ? .toggleOn : .toggleOff)
+                        Image(notificationService.isNotificationsEnabled ? .toggleOn : .toggleOff)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 80, height: 80, alignment: .center)
                             .onTapGesture {
-                                toggleNotifications()
+                                Task {
+                                    await notificationService.toggleNotifications()
+                                }
                             }
                     }
                     .padding(.horizontal)
                     .background(RoundedRectangle(cornerRadius: 20).fill(.customDarkGray))
                     .padding(.top, 20)
                     .onTapGesture {
-                        toggleNotifications()
+                        Task {
+                            await notificationService.toggleNotifications()
+                        }
                     }
                     
                     HStack(alignment: .center, spacing: 0) {
@@ -155,6 +159,7 @@ struct SettingsMainView: View {
                     HStack(alignment: .center, spacing: 0) {
                         Text("ABOUT DEVELOPER")
                             .foregroundStyle(.white)
+                            .foregroundStyle(.white)
                             .font(.customFont(font: .bold, size: 20))
                         Spacer()
                         Image(.forward)
@@ -214,27 +219,16 @@ struct SettingsMainView: View {
                        // .padding(.top, 40)
                 }
             }
+            .onAppear {
+                // Проверяем текущий статус разрешений при появлении экрана
+                Task {
+                    await notificationService.checkCurrentStatus()
+                }
+            }
         }
     }
     
     // MARK: - Private Methods
-    
-    /// Переключение состояния уведомлений
-    private func toggleNotifications() {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            isNotificationsEnabled.toggle()
-            UserDefaults.standard.set(isNotificationsEnabled, forKey: "notifications_enabled")
-            
-            // Здесь можно добавить логику для включения/выключения уведомлений
-            if isNotificationsEnabled {
-                print("Уведомления включены")
-                // Логика для включения уведомлений
-            } else {
-                print("Уведомления выключены")
-                // Логика для выключения уведомлений
-            }
-        }
-    }
     
     /// Очистка истории
     private func clearHistory() {

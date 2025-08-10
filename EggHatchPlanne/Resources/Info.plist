@@ -10,5 +10,9 @@
 		<string>Fredoka-Regular.ttf</string>
 		<string>Fredoka-SemiBold.ttf</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select images for your hatching records.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>This app needs to send you notifications about egg turning reminders and hatching updates.</string>
 </dict>
 </plist>

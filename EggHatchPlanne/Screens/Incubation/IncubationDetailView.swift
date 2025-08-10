@@ -106,7 +106,6 @@ struct IncubationDetailView: View {
                     .background(RoundedRectangle(cornerRadius: 20).fill(.customDarkGray))
                     .padding(.horizontal)
                 }
-                //.padding(.top, 80)
                 .padding(.top, AppConfig.isIPhoneSE3rdGeneration ? 120 : 80)
             } else {
                 // Показываем сообщение если инкубатор не найден

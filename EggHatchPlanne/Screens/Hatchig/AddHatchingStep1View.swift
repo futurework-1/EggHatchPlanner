@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import Photos
 
 struct AddHatchingStep1View: View {
     
@@ -17,6 +19,7 @@ struct AddHatchingStep1View: View {
     @State private var isDatePickerPresented: Bool = false
     @State private var selectedImage: UIImage?
     @State private var isImagePickerPresented: Bool = false
+    @State private var showPhotoAccessAlert: Bool = false
     @FocusState private var isCommentFieldFocused: Bool
     
     var body: some View {
@@ -31,7 +34,7 @@ struct AddHatchingStep1View: View {
                 
                 // Выбор изображения
                 Button(action: {
-                    isImagePickerPresented = true
+                    checkPhotoLibraryPermission()
                 }) {
                     RoundedRectangle(cornerRadius: 17)
                         .fill(.customDarkGray)
@@ -126,8 +129,9 @@ struct AddHatchingStep1View: View {
             }
             .padding(.horizontal)
             .padding(.top, AppConfig.isIPhoneSE3rdGeneration ? 110 : 72)
-            .padding(.bottom, AppConfig.adaptiveTabbarHeight + (AppConfig.isIPhoneSE3rdGeneration ? 150 : 92))
+            .padding(.bottom, AppConfig.adaptiveTabbarHeight + (AppConfig.isIPhoneSE3rdGeneration ? 50 : 0))
         }
+        .onAppear { tabbarService.isTabbarVisible = false }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
         .toolbar {
@@ -135,6 +139,7 @@ struct AddHatchingStep1View: View {
                 Image(.backButton)
                     .onTapGesture {
                         appRouter.hatchingRoute.removeLast()
+                        tabbarService.isTabbarVisible = true
                     }
             }
             
@@ -164,6 +169,45 @@ struct AddHatchingStep1View: View {
         }
         .sheet(isPresented: $isImagePickerPresented) {
             ImagePicker(selectedImage: $selectedImage)
+        }
+        .alert("Photo Access Required", isPresented: $showPhotoAccessAlert) {
+            Button("Open Settings") {
+                if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsUrl)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Please allow access to your photo library in Settings to select images for your hatching records.")
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Проверяет разрешение на доступ к фотографиям
+    private func checkPhotoLibraryPermission() {
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        
+        switch status {
+        case .notDetermined:
+            // Запрашиваем разрешение - это покажет нативное уведомление
+            PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
+                DispatchQueue.main.async {
+                    if newStatus == .authorized || newStatus == .limited {
+                        self.isImagePickerPresented = true
+                    } else {
+                        self.showPhotoAccessAlert = true
+                    }
+                }
+            }
+        case .authorized, .limited:
+            // Разрешение уже получено
+            isImagePickerPresented = true
+        case .denied, .restricted:
+            // Пользователь отказал в доступе
+            showPhotoAccessAlert = true
+        @unknown default:
+            showPhotoAccessAlert = true
         }
     }
 }

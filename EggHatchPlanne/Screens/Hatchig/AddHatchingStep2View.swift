@@ -103,8 +103,9 @@ struct AddHatchingStep2View: View {
             }
             .padding(.horizontal)
             .padding(.top, AppConfig.isIPhoneSE3rdGeneration ? 118 : 80)
-            .padding(.bottom, AppConfig.adaptiveTabbarHeight + (AppConfig.isIPhoneSE3rdGeneration ? 150 : 92))
+            .padding(.bottom, AppConfig.adaptiveTabbarHeight + (AppConfig.isIPhoneSE3rdGeneration ? 50 : 0))
         }
+        .onAppear { tabbarService.isTabbarVisible = false }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
         .toolbar {
