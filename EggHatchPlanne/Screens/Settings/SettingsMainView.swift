@@ -11,6 +11,15 @@ enum WebViewType {
         case .aboutDeveloper: return "About Developer"
         }
     }
+    
+    var urlString: String {
+        switch self {
+            case .privacyPolicy:
+                "https://sites.google.com/view/egghatchplanner/privacy-policy"
+            case .aboutDeveloper:
+                "https://sites.google.com/view/egghatchplanner/app-support"
+        }
+    }
 }
 
 struct WebViewScreen: View {
@@ -56,7 +65,6 @@ struct SettingsMainView: View {
     
     /// Переменные для WebView
     @State private var showWebView = false
-    @State private var webViewURL: URL?
     @State private var webViewType: WebViewType = .aboutDeveloper
     
     /// Показывать ли алерт очистки истории
@@ -64,9 +72,6 @@ struct SettingsMainView: View {
     
     /// Показывать ли алерт единиц измерения
     @State private var showUnitMeasurementAlert = false
-    
-    private let privacyPolicyURL = URL(string: "https://apple.com")
-    private let aboutDeveloperURL = URL(string: "https://google.com")
     
     var body: some View {
         NavigationStack(path: $appRouter.settingsRoute) {
@@ -147,7 +152,6 @@ struct SettingsMainView: View {
                             .frame(width: 40, height: 40, alignment: .center)
                             .onTapGesture {
                                 webViewType = .privacyPolicy
-                                webViewURL = privacyPolicyURL
                                 showWebView = true
                             }
                     }
@@ -168,7 +172,6 @@ struct SettingsMainView: View {
                             .frame(width: 40, height: 40, alignment: .center)
                             .onTapGesture {
                                 webViewType = .aboutDeveloper
-                                webViewURL = aboutDeveloperURL
                                 showWebView = true
                             }
                     }
@@ -185,7 +188,7 @@ struct SettingsMainView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden()
             .navigationDestination(isPresented: $showWebView) {
-                if let url = webViewURL {
+                if let url = URL(string: webViewType.urlString) {
                     WebViewScreen(url: url, type: webViewType)
                 }
             }
