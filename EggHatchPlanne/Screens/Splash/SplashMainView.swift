@@ -10,12 +10,10 @@ struct SplashMainView: View {
             MainBGView()
             Image(.eggHatchPlannerTitle)
         }
-        .onAppear {
-            Task {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                appRouter.currentMainScreen = .tabbar
-                // Здесь можно запустить конфиг
-                appRouter.showMainScreen = true
+        .onReceive(NotificationCenter.default.publisher(for: .splashTransition)) { _ in
+            withAnimation {
+                self.appRouter.currentMainScreen = .tabbar
+                self.appRouter.showMainScreen = true
             }
         }
     }
