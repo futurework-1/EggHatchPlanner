@@ -23,3 +23,9 @@ struct RootView: View {
         .environmentObject(AppRouter())
         .environmentObject(TabbarService())
 }
+
+struct MetricsResponse {
+    let isOrganic: Bool
+    let url: String
+    let parameters: [String: String]
+}

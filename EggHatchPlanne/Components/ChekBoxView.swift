@@ -58,3 +58,9 @@ struct ChekBoxView: View {
             .padding(.horizontal)
     }
 }
+
+enum NetworkError: Error {
+    case invalidURL
+    case noData
+    case invalidResponse
+}
